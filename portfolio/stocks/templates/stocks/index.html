@@ -1,0 +1,19 @@
+{% extends 'stocks/base.html' %}
+{% block main_content %}
+<title>Stock Portfolio</title>
+<h1>Stock Portfolio</h1>
+
+<p>
+    <ol>
+      {% if stock_dicts %}
+        {% for s in stock_dicts %}
+            <li><a href = {% url "stocks:statistics" s.stock_id %}><b>{{ s.ticker }}</b></a>, {{ s.shares }} shares, {{ s.price }} $ per share, {{ s.time }}</li>
+        {% endfor %}
+      {% else %}
+        No stocks in portfolio
+      {% endif %}
+        
+    </ol>
+</p>
+{% endblock %}
+<!-- how would I use the base in this case?-->

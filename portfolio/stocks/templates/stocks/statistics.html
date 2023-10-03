@@ -1,0 +1,15 @@
+{% extends 'stocks/base.html' %}
+{% block main_content %}
+<h1> {{stock.ticker}} </h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<ul>
+    Date: {{stock.price_set.all.first.date}}
+    <br>Price: ${{stock.price_set.all.first}}
+    
+</ul>
+
+{% endblock %}
+
+
