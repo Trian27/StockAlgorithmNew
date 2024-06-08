@@ -1,14 +1,19 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
 from django.template import loader
 import requests, time
 from .models import Stock
 import datetime
+from django.http import JsonResponse, HttpResponse
 
 HTML_SRING = """<h1>Home Page</h1>""" #just for testing
 def home(request):
-    return HttpResponse(HTML_SRING)
+    template = loader.get_template("stocks/home.html")
+    context = {}
+    return HttpResponse(template.render(context, request))
+    # return HttpResponse(HTML_SRING)
 
+def addStock(request):
+    return JsonResponse({'success': True})
 
 # Index page for endpoint "stocks/"
 def index(request):
