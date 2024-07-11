@@ -22,6 +22,4 @@ urlpatterns = [
     path('stocks/', include('stocks.urls')),
     path('admin/', admin.site.urls),
     path('', views.home, name = 'home'),
-    #Cannot do path('home/', include('stocks.urls'))
-    #Check stocks.urls.py for more info
 ]

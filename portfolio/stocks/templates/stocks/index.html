@@ -2,6 +2,7 @@
 {% block main_content %}
 <title>Stock Portfolio</title>
 <h1>Stock Portfolio</h1>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <p>
     <ol>
@@ -12,8 +13,61 @@
       {% else %}
         No stocks in portfolio
       {% endif %}
-        
     </ol>
 </p>
+
+<dialog id="track_new_stock_dialog" selection anchor_node_text class="overflow-hidden bg-transparent">
+  <div class="flex justify-center items-center w-screen h-screen bg-transparent">
+    <div class="bg-white p-4 rounded-lg w-96 h-96 overflow-auto">
+      <h2 class="text-2xl font-bold mb-4">Track New Stock</h2>
+        <form id="track_new_stock_form">
+          {% csrf_token %}
+          <span class="bg-white-100 p-2"></span>
+          <div class="mb-4">
+            <label for="ticker">Ticker:</label>
+            <input type="text" id="ticker" name="ticker" maxlength="5" required>
+            <label for="num_shares">Number of Shares:</label>
+            <input type="number" id="num_shares" name="num_shares" min="0">
+          </div>
+          <br>
+          <div class="mt-6">
+            <button type="submit" id="track_new_stock_submit_button" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Track Stock</button>
+            <button type="button" onclick="track_new_stock_dialog.close(); $('#track_new_stock_form')[0].reset();" class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">Cancel</button>
+          </div>
+        </form>
+    </div>
+  </div>
+  <script>
+        $("dialog").on("submit", "#track_new_stock_form", (evt) => {
+          evt.preventDefault();
+          const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const form = document.getElementById('track_new_stock_form');
+          const formData = new FormData(form);
+          fetch('{% url "stocks:track_new_stock"%}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData,
+          })
+          .then(response => {
+              if (!response.ok) {
+                  return response.json().then(data => {
+                      throw new Error(data.error);
+                  });
+              }
+              return response.json();
+          })
+          .then(data => {
+            window.location.reload();
+          })
+          .catch(error => {
+              console.error('Error:', error);
+          });
+        })
+  </script>
+</dialog>
+<button type="button" id="track_new_stock_button" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600" onclick="track_new_stock_dialog.showModal()">Track New Stock</button>
+
 {% endblock %}
 <!-- how would I use the base in this case?-->

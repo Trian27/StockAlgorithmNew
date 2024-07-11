@@ -1,6 +1,5 @@
 from django.db import models
 
-# Tri-An will put in models for stocks and prices.
 class Stock(models.Model):
     ticker = models.CharField(max_length=5)
     num_shares = models.IntegerField(default=0)

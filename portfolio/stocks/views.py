@@ -2,22 +2,48 @@ from django.shortcuts import render, get_object_or_404
 from django.template import loader
 import requests, time
 from .models import Stock
+from .forms import StockForm
 import datetime
 from django.http import JsonResponse, HttpResponse
 
-HTML_SRING = """<h1>Home Page</h1>""" #just for testing
 def home(request):
     template = loader.get_template("stocks/home.html")
     context = {}
     return HttpResponse(template.render(context, request))
-    # return HttpResponse(HTML_SRING)
 
-def addStock(request):
-    return JsonResponse({'success': True})
+def track_new_stock(request):
+    if request.method == 'POST':
+        form = StockForm(request.POST)
+        stock = None
+        if form.is_valid():
+            stock = form.save(commit=False)
+            stock.ticker = stock.ticker.upper()
+            if validate_ticker(stock.ticker):
+                stock.save()
+                data = {'message': 'Stock tracked successfully'}
+                return JsonResponse(data, status=200)
+            else:
+                data = {'error': 'Invalid stock ticker'}
+                return JsonResponse(data, status=400)
+        else:
+            data = {'error': 'Form failed to validate'}
+            return JsonResponse(data, status=400)
+    else:
+        data = {'error': 'Invalid request'}
+        return JsonResponse(data, status=400)
+
+def validate_ticker(ticker):
+    params = {"function": "SYMBOL_SEARCH", "keywords": ticker, "apikey": "https://www.alphavantage.co/"}
+    response = requests.get("https://www.alphavantage.co/query", params)
+    data = response.json()
+    try:
+        return data["bestMatches"][0]["1. symbol"] == ticker
+    except Exception as ex:
+        return False
+
 
 # Index page for endpoint "stocks/"
 def index(request):
-
     # Query database for list of all stocks
     stock_list = Stock.objects.all()
     price_list= []
@@ -27,24 +53,14 @@ def index(request):
 
     for i in range(0, len(stock_list)):
         asset = stock_list[i]
-
-        #name = []
-        #name.append([s.ticker for s in stock_list])
         name.append(asset.ticker)
-        #quantity = []
-        #quantity.append([str(s.num_shares) for s in stock_list])
         quantity.append(str(asset.num_shares))
-        #by resetting name & quantity everytime,
-            #it made both of them lists within a list. Why?
 
         prices_ind = asset.price_set.all()
         prices_ind.delete()
-        params = {"function": "TIME_SERIES_MONTHLY_ADJUSTED", "symbol": name[i], "apikey" : "https://www.alphavantage.co/"}
-        #params = {"function": "TIME_SERIES_MONTHLY_ADJUSTED", "symbol": name[0][i], "apikey" : "https://www.alphavantage.co/"}
-        #when accessing name list, why is it name[0][i] instead of name[i]?
+        params = {"function": "TIME_SERIES_MONTHLY_ADJUSTED", "symbol": name[i], "apikey": "https://www.alphavantage.co/"}
         response = requests.get("https://www.alphavantage.co/query", params)
         data = response.json()
-        time.sleep(12)
         
         for x in data['Monthly Adjusted Time Series']:
             if x.find("2023") != -1 or x.find("2022") != -1 or x.find("2021") != -1:
@@ -54,24 +70,16 @@ def index(request):
                 #when creating price, make sure has 2 decimal places: ex. $21.8 = $21.80
         prices_ind = asset.price_set.all()        
         price_list.append(prices_ind[0])   
-        #can probably shorten: price_list.append(asset.price_set.(somehow filter)) 
         total_val += price_list[i].price * int(quantity[i])
 
     stock_dicts = []
     for i in range(0, len(stock_list)):
-        #when stock models are deleted, id doesn't get deleted as well
-        #ex. there is no stock with id of 1, but SOXL has an id of 12
         stock_dicts.append({'stock_id': str(stock_list[i].id),'ticker': stock_list[i].ticker, 'shares': stock_list[i].num_shares, 'price': price_list[i].price, 'time': price_list[i].date})
     template = loader.get_template("stocks/index.html")
     context = {"stock_dicts": stock_dicts,}
     return HttpResponse(template.render(context, request))
-    
 
 def statistics(request, stock_id):
     stock = get_object_or_404(Stock, pk = stock_id)
     return render(request, 'stocks/statistics.html', {'stock': stock})
-    #<!-- ${{stock.price_set.all()[:1].get()}} per share -->
-    #<!-- Above doesn't work in statistics.html. also for some reason comment causes an error -->
-
-
 
