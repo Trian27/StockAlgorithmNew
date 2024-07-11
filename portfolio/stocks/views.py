@@ -11,6 +11,33 @@ def home(request):
     context = {}
     return HttpResponse(template.render(context, request))
 
+def buy_stock(request, stock_id):
+    if request.method == 'POST':
+        stock = get_object_or_404(Stock, pk = stock_id)
+        num_shares = request.POST.get('num_shares')
+        stock.shares = stock.shares + num_shares
+        stock.save()
+        data = {'message': 'Stock bought successfully'}
+        return JsonResponse(data, status=200)
+    else:
+        data = {'error': 'Invalid request'}
+        return JsonResponse(data, status=400)
+    
+def sell_stock(request, stock_id):
+    if request.method == 'POST':
+        stock = get_object_or_404(Stock, pk = stock_id)
+        num_shares = request.POST.get('num_shares')
+        if num_shares > stock.shares:
+            stock.delete()
+        else:
+            stock.shares = stock.shares + num_shares
+            stock.save()
+        data = {'message': 'Stock sold successfully'}
+        return JsonResponse(data, status=200)
+    else:
+        data = {'error': 'Invalid request'}
+        return JsonResponse(data, status=400)
+
 def track_new_stock(request):
     if request.method == 'POST':
         form = StockForm(request.POST)
@@ -62,8 +89,11 @@ def index(request):
         response = requests.get("https://www.alphavantage.co/query", params)
         data = response.json()
         
+        if 'Monthly Adjusted Time Series' not in data:
+            template = loader.get_template("stocks/api_request_limit_exceeded.html")
+            return HttpResponse(template.render({}, request))
         for x in data['Monthly Adjusted Time Series']:
-            if x.find("2023") != -1 or x.find("2022") != -1 or x.find("2021") != -1:
+            if x.find("2024") != -1 or x.find("2023") != -1 or x.find("2022") != -1:
                 #switch to find the current year through datetime and then calculuate last 3
                 t_date = datetime.datetime.strptime(x,'%Y-%m-%d').date()
                 asset.price_set.create(date = t_date, price = data['Monthly Adjusted Time Series'][x]['5. adjusted close'])
