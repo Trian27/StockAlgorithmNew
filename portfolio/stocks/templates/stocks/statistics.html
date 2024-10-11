@@ -5,8 +5,8 @@
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
 <ul>
-    Date: {{stock.price_set.all.first.date}}
-    <br>Price: ${{stock.price_set.all.first}}
+    Date: {{stock.price_by_month_set.all.first.date}}
+    <br>Price_By_Month: ${{stock.price_by_month_set.all.first}}
     
 </ul>
 
