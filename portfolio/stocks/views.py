@@ -91,37 +91,6 @@ def index(request):
             stock_dicts.append({'stock_id': stock.id,'ticker': stock.ticker, 'shares': stock.num_shares, 'curr_daily_price': curr_daily_price.price_by_day, 'time': curr_daily_price.date})
         except Price_By_Day.DoesNotExist:
             break
-    # total_val = 0
-    # name = []
-    # quantity = []
-
-    # for i in range(0, len(stock_list)):
-    #     asset = stock_list[i]
-    #     name.append(asset.ticker)
-    #     quantity.append(str(asset.num_shares))
-
-    #     price_by_months_ind = asset.price_by_month_set.all()
-    #     price_by_months_ind.delete()
-    #     params = {"function": "TIME_SERIES_MONTHLY_ADJUSTED", "symbol": name[i], "apikey": "https://www.alphavantage.co/"}
-    #     response = requests.get("https://www.alphavantage.co/query", params)
-    #     data = response.json()
-        
-    #     if 'Monthly Adjusted Time Series' not in data:
-    #         template = loader.get_template("stocks/api_request_limit_exceeded.html")
-    #         return HttpResponse(template.render({}, request))
-    #     for x in data['Monthly Adjusted Time Series']:
-    #         if x.find("2024") != -1 or x.find("2023") != -1 or x.find("2022") != -1:
-    #             #switch to find the current year through datetime and then calculuate last 3
-    #             t_date = datetime.datetime.strptime(x,'%Y-%m-%d').date()
-    #             asset.price_by_month_set.create(date = t_date, price_by_month = data['Monthly Adjusted Time Series'][x]['5. adjusted close'])
-    #             #when creating price_by_month, make sure has 2 decimal places: ex. $21.8 = $21.80
-    #     price_by_months_ind = asset.price_by_month_set.all()        
-    #     price_by_month_list.append(price_by_months_ind[0])   
-    #     total_val += price_by_month_list[i].price_by_month * int(quantity[i])
-
-    # stock_dicts = []
-    # for i in range(0, len(stock_list)):
-    #     stock_dicts.append({'stock_id': str(stock_list[i].id),'ticker': stock_list[i].ticker, 'shares': stock_list[i].num_shares, 'price_by_month': price_by_month_list[i].price_by_month, 'time': price_by_month_list[i].date})
     template = loader.get_template("stocks/index.html")
     context = {"stock_dicts": stock_dicts, "date": date.today()}
     return HttpResponse(template.render(context, request))
@@ -165,7 +134,7 @@ def update_price_by_days(request):
     stock_list = Stock.objects.all()
     for stock in stock_list:
 
-        params = {"function": "TIME_SERIES_DAILY_ADJUSTED", "symbol": stock.ticker, "apikey": "https://www.alphavantage.co/"}
+        params = {"function": "TIME_SERIES_DAILY", "symbol": stock.ticker, "apikey": "https://www.alphavantage.co/"}
         response = requests.get("https://www.alphavantage.co/query", params)
         data = response.json()
         
@@ -176,8 +145,8 @@ def update_price_by_days(request):
         curr_data = next(iter(data['Time Series (Daily)'].values()))
         t_date = datetime.datetime.strptime(curr_data,'%Y-%m-%d').date()
 
-        Price_By_Month.objects.order_by('date').first().delete()
-        Price_By_Month.create(stock = stock, date = t_date, price_by_day = curr_data['5. adjusted close'])
+        Price_By_Day.objects.order_by('date').first().delete()
+        Price_By_Day.create(stock = stock, date = t_date, price_by_day = curr_data['4. close'])
     return
 
 """
@@ -209,7 +178,7 @@ def get_price_by_months_for_stock(ticker):
 """
 function: get_price_by_days_for_stock
 parameters: ticker  -> stock ticker
-returns: a list of all past adjusted daily stock prices for a single stock, ordered by descending date
+returns: a list of all past daily stock prices for a single stock, ordered by descending date
 #to be used when creating a new stock object to track
 """
 def get_price_by_days_for_stock(ticker):
