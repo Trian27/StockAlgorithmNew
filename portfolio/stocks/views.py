@@ -6,6 +6,7 @@ from .forms import StockForm
 import datetime
 from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError
+from datetime import date
 
 def home(request):
     template = loader.get_template("stocks/home.html")
@@ -122,7 +123,7 @@ def index(request):
     # for i in range(0, len(stock_list)):
     #     stock_dicts.append({'stock_id': str(stock_list[i].id),'ticker': stock_list[i].ticker, 'shares': stock_list[i].num_shares, 'price_by_month': price_by_month_list[i].price_by_month, 'time': price_by_month_list[i].date})
     template = loader.get_template("stocks/index.html")
-    context = {"stock_dicts": stock_dicts,}
+    context = {"stock_dicts": stock_dicts, "date": date.today()}
     return HttpResponse(template.render(context, request))
 
 def statistics(request, stock_id):

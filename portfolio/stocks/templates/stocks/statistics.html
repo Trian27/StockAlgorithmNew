@@ -5,9 +5,9 @@
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
 <ul>
-    Date: {{stock.price_by_month_set.all.first.date}}
-    <br>Price_By_Month: ${{stock.price_by_month_set.all.first}}
-    
+    Date: {{stock.price_by_day_set.all.first.date}}
+    <br>Closing Price: ${{stock.price_by_day_set.all.first}}
+    <br>Last Month's Closing Price: ${{stock.price_by_month_set.all.first}} on {{stock.price_by_month_set.all.first.date}} 
 </ul>
 
 {% endblock %}

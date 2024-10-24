@@ -2,6 +2,7 @@
 {% block main_content %}
 <title>Stock Portfolio</title>
 <h1>Stock Portfolio</h1>
+<h2>{{date}}</h2>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="../../static/stocks/style.css" />
 <p>
@@ -49,6 +50,7 @@
                     return response.json();
                 })
                 .then(data => {
+                  track_new_stock_dialog.close();
                   window.location.reload();
                 })
                 .catch(error => {
@@ -98,6 +100,7 @@
                     return response.json();
                 })
                 .then(data => {
+                  track_new_stock_dialog.close();
                   window.location.reload();
                 })
                 .catch(error => {
@@ -106,43 +109,69 @@
               })
             </script>
           </dialog>
-          <li>
-            <a href = {% url "stocks:statistics" s.stock_id %}>
+          <li class="flex items-center">
+            <!-- Ticker with red text and no highlight -->
+            <a href = {% url "stocks:statistics" s.stock_id %} class="ticker">
               <b>{{ s.ticker }}</b></a>, {{ s.shares }} shares, {{ s.curr_daily_price }} $ per share, {{ s.time }}
-              <ul class="flex flex-row mr-4 items-center">
-
-
-
-                <div class="dropdown">
-                  <button class="dropbtn">Dropdown</button>
-                  <div class="dropdown-content">
-                    <button type="button" id="buy_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="buy_stock_dialog{{s.stock_id}}.showModal()" >Buy</button>
-                    <button type="button" id="sell_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="sell_stock_dialog{{s.stock_id}}.showModal()" >Sell</button>
-                  </div>
-                </div>
-
-
-                <li class="nav-item dropdown">
-                  <a class="nav-link p-0 active:text-red-300 focus:text-red-300" href="#" id="commentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots-vertical text-2xl dark:text-white"></i>
-                  </a>
-                  <style>
-                    .hover-highlight:hover {
-                      background-color: lightgray;
-                    }
-                    .btn-square {
-                        border-radius: 0 !important;
-                    }
-                  </style>
-                  <ul class="dropdown-menu dropdown-menu-end py-0" aria-labelledby="BuyOrSellDropdown">
-                    <li>                                    
-                      <button type="button" id="buy_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="buy_stock_dialog{{s.stock_id}}.showModal()" >Buy</button>
-                      <button type="button" id="sell_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="sell_stock_dialog{{s.stock_id}}.showModal()" >Sell</button>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
+          
+            <!-- Dropdown Button and Content with grey background -->
+            <div class="dropdown ml-4 relative">
+              <button class="dropbtn">Dropdown</button>
+              <div class="dropdown-content absolute left-0 mt-2 hidden bg-gray-200 shadow-md">
+                <button type="button" id="buy_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="buy_stock_dialog{{s.stock_id}}.showModal()">Buy</button>
+                <button type="button" id="sell_stock" class="btn btn-light w-100 hover-highlight btn-square text-sm font-medium hover:text-red-500 mr-3" onclick="sell_stock_dialog{{s.stock_id}}.showModal()">Sell</button>
+              </div>
+            </div>
+          
+            <style>
+              /* Styling for the ticker to be red and not highlighted */
+              .ticker {
+                color: red;
+                text-decoration: none;
+              }
+          
+              .ticker:hover {
+                text-decoration: none; /* Prevent underline on hover */
+                background-color: transparent; /* No background highlight on hover */
+              }
+          
+              /* Dropdown styling */
+              .dropdown:hover .dropdown-content {
+                display: block;
+              }
+          
+              .dropdown {
+                position: relative;
+                display: inline-block;
+              }
+          
+              /* Grey background for dropdown content */
+              .dropdown-content {
+                display: none;
+                position: absolute;
+                background-color: #D3D3D3; /* Light grey background */
+                min-width: 160px;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 1;
+              }
+          
+              .dropdown-content button {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+              }
+          
+              .dropdown-content button:hover {
+                background-color: #B0B0B0; /* Darker grey on hover */
+              }
+          
+              .btn-square {
+                border-radius: 0 !important;
+              }
+            </style>
           </li>
+                    
         {% endfor %}
       {% else %}
         No stocks in portfolio
@@ -193,6 +222,7 @@
               return response.json();
           })
           .then(data => {
+            track_new_stock_dialog.close();
             window.location.reload();
           })
           .catch(error => {
@@ -204,4 +234,3 @@
 <button type="button" id="track_new_stock_button" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600" onclick="track_new_stock_dialog.showModal()">Track New Stock</button>
 
 {% endblock %}
-<!-- how would I use the base in this case?-->
