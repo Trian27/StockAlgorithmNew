@@ -1,7 +1,7 @@
 from django.db import models
 
 class Stock(models.Model):
-    ticker = models.CharField(max_length=5)
+    ticker = models.CharField(max_length=5, unique=True)
     num_shares = models.IntegerField(default=0)
 
     def __str__(self):

@@ -5,6 +5,7 @@ from .models import Stock, Price_By_Day, Price_By_Month
 from .forms import StockForm
 import datetime
 from django.http import JsonResponse, HttpResponse
+from django.db import IntegrityError
 
 def home(request):
     template = loader.get_template("stocks/home.html")
@@ -42,24 +43,27 @@ def track_new_stock(request):
     if request.method == 'POST':
         form = StockForm(request.POST)
         stock = None
-        if form.is_valid():
-            stock = form.save(commit=False)
-            stock.ticker = stock.ticker.upper()
-            if validate_ticker(stock.ticker):
-                stock.save()
-                day_prices = get_price_by_days_for_stock(stock.ticker)
-                month_prices = get_price_by_months_for_stock(stock.ticker)
-                if (day_prices == "api_request_limit_exceeded" or month_prices == "api_request_limit_exceeded"):
-                    template = loader.get_template("stocks/api_request_limit_exceeded.html")
-                    return HttpResponse(template.render({}, request))
-                data = {'message': 'Stock tracked successfully'}
-                return JsonResponse(data, status=200)
+        try:
+            if form.is_valid():
+                stock = form.save(commit=False)
+                stock.ticker = stock.ticker.upper()
+                if validate_ticker(stock.ticker):
+                    stock.save()
+                    day_prices = get_price_by_days_for_stock(stock.ticker)
+                    month_prices = get_price_by_months_for_stock(stock.ticker)
+                    if (day_prices == "api_request_limit_exceeded" or month_prices == "api_request_limit_exceeded"):
+                        template = loader.get_template("stocks/api_request_limit_exceeded.html")
+                        return HttpResponse(template.render({}, request))
+                    data = {'message': 'Stock tracked successfully'}
+                    return JsonResponse(data, status=200)
+                else:
+                    data = {'error': 'Invalid stock ticker'}
+                    return JsonResponse(data, status=400)
             else:
-                data = {'error': 'Invalid stock ticker'}
+                data = {'error': 'Form failed to validate'}
                 return JsonResponse(data, status=400)
-        else:
-            data = {'error': 'Form failed to validate'}
-            return JsonResponse(data, status=400)
+        except IntegrityError:
+            return JsonResponse({'error': 'Stock is already being tracked'}, status=400)
     else:
         data = {'error': 'Invalid request'}
         return JsonResponse(data, status=400)
@@ -79,10 +83,13 @@ def index(request):
     # Query database for list of all stocks
     stock_list = Stock.objects.all()
     stock_dicts = []
+    
     for stock in stock_list:
-        curr_daily_price = Price_By_Day.objects.latest('date')
-        stock_dicts.append({'stock_id': stock.id,'ticker': stock.ticker, 'shares': stock.num_shares, 'curr_daily_price': curr_daily_price.price_by_day, 'time': curr_daily_price.date})
-
+        try:
+            curr_daily_price = Price_By_Day.objects.latest('date')
+            stock_dicts.append({'stock_id': stock.id,'ticker': stock.ticker, 'shares': stock.num_shares, 'curr_daily_price': curr_daily_price.price_by_day, 'time': curr_daily_price.date})
+        except Price_By_Day.DoesNotExist:
+            break
     # total_val = 0
     # name = []
     # quantity = []
@@ -207,20 +214,17 @@ returns: a list of all past adjusted daily stock prices for a single stock, orde
 def get_price_by_days_for_stock(ticker):
     asset = Stock.objects.get(ticker=ticker)
     price_by_day_list = []
-    params = {"function": "TIME_SERIES_DAILY_ADJUSTED", "symbol": ticker, "apikey": "https://www.alphavantage.co/"}
+    params = {"function": "TIME_SERIES_DAILY", "symbol": ticker, "apikey": "https://www.alphavantage.co/"}
     response = requests.get("https://www.alphavantage.co/query", params)
     data = response.json()
-    
     if 'Time Series (Daily)' not in data:
         return "api_request_limit_exceeded"
     
     for x in data['Time Series (Daily)']:
         t_date = datetime.datetime.strptime(x,'%Y-%m-%d').date()
-        asset.price_by_day_set.create(date = t_date, price_by_day = data['Time Series (Daily)'][x]['5. adjusted close'])
+        asset.price_by_day_set.create(date = t_date, price_by_day = data['Time Series (Daily)'][x]['4. close'])
 
     price_by_day_list.append(asset.price_by_day_set.all())
-
-    print(price_by_day_list)
     
     return price_by_day_list
 
