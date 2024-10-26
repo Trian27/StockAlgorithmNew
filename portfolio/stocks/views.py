@@ -105,7 +105,7 @@ description: will run automatically through CronJobs every month to remove old m
 parameters: request -> http request
 returns: None
 """
-def update_price_by_months(request):
+def update_price_by_months():
     stock_list = Stock.objects.all()
     for stock in stock_list:
 
@@ -114,8 +114,7 @@ def update_price_by_months(request):
         data = response.json()
         
         if 'Monthly Adjusted Time Series' not in data:
-            template = loader.get_template("stocks/api_request_limit_exceeded.html")
-            return HttpResponse(template.render({}, request))
+            raise Exception("Something Wrong!! Maybe too many stocks")
         
         curr_data = next(iter(data['Monthly Adjusted Time Series'].values()))
         t_date = datetime.datetime.strptime(curr_data,'%Y-%m-%d').date()
@@ -127,10 +126,10 @@ def update_price_by_months(request):
 """
 function: update_price_by_days
 description: will run automatically through CronJobs every month to remove old day price & add the new one
-parameters: request -> http request
+parameters: None
 returns: None
 """
-def update_price_by_days(request):
+def update_price_by_days():
     stock_list = Stock.objects.all()
     for stock in stock_list:
 
@@ -139,8 +138,7 @@ def update_price_by_days(request):
         data = response.json()
         
         if 'Time Series (Daily)' not in data:
-            template = loader.get_template("stocks/api_request_limit_exceeded.html")
-            return HttpResponse(template.render({}, request))
+            raise Exception("Something Wrong!! Maybe too many stocks")
     
         curr_data = next(iter(data['Time Series (Daily)'].values()))
         t_date = datetime.datetime.strptime(curr_data,'%Y-%m-%d').date()

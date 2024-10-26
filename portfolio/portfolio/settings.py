@@ -84,9 +84,10 @@ DATABASES = {
 
 #Cronjobs
 CRONJOBS = [
-    ('0 17 28-31 * *', 'django.core.management.call_command', ['update_price_by_months_command'], '>> /path/to/logs/monthly_cron.log 2>&1'),
-    ('0 17 * * *', 'your_app.views.update_price_by_days', '>> /path/to/logs/daily_cron.log 2>&1'),
+    ('0 17 28-31 * *', 'django.core.management.call_command', ['update_price_by_months_command'], '>> /Users/trian/Projects/StockAlgorithm/portfolio/logs/monthly_cron.log 2>&1'),
+    ('0 17 * * 1-5', 'stocks.views.update_price_by_days', '>> /Users/trian/Projects/StockAlgorithm/portfolio/logs/daily_cron.log 2>&1'),
 ]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
